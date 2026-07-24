@@ -162,8 +162,9 @@ router.patch(
         return respondServiceError(res, result.error);
       }
 
-      const auth = getAuth(req);
-      const going = await goingSetForClerkUser(auth?.userId, [result.event.id]);
+      const going = await goingSetForClerkUser(req.clerkUserId, [
+        result.event.id,
+      ]);
 
       return success(
         res,

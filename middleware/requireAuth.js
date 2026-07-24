@@ -3,7 +3,10 @@ const { fail } = require("../utils/apiResponse");
 
 /**
  * Require a valid Clerk session JWT (Authorization: Bearer <token>).
- * Attaches req.auth (Clerk) for downstream handlers.
+ * Sets req.clerkUserId for downstream handlers.
+ *
+ * Important: do NOT overwrite req.auth — Clerk stores a branded function
+ * there; replacing it breaks later getAuth(req) calls.
  * Returns JSON 401 — never redirects (mobile API).
  */
 function requireAuth(req, res, next) {
@@ -17,7 +20,6 @@ function requireAuth(req, res, next) {
     ]);
   }
 
-  req.auth = auth;
   req.clerkUserId = userId;
   return next();
 }

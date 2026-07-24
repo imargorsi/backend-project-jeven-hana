@@ -274,28 +274,57 @@ async function listGoingEventsForUser(userId) {
 
 /**
  * Toggle Going for a user. Updates denormalized interestedCount.
+ * Uses a row lock + transaction so concurrent toggles cannot drift the count.
  * @returns {{ event, isGoingByMe } | null}
  */
 async function toggleGoing(userId, eventId) {
-  const event = await getEventById(eventId);
-  if (!event) return null;
+  return db.sequelize.transaction(async (transaction) => {
+    const event = await db.Event.findByPk(eventId, {
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+    if (!event) return null;
 
-  const existing = await db.EventGoing.findOne({
-    where: { userId, eventId },
+    const existing = await db.EventGoing.findOne({
+      where: { userId, eventId },
+      transaction,
+      lock: transaction.LOCK.UPDATE,
+    });
+
+    if (existing) {
+      await existing.destroy({ transaction });
+      await db.Event.update(
+        {
+          interestedCount: db.sequelize.literal(
+            'GREATEST("interestedCount" - 1, 0)',
+          ),
+        },
+        { where: { id: event.id }, transaction },
+      );
+      await event.reload({ transaction });
+      return { event, isGoingByMe: false };
+    }
+
+    try {
+      await db.EventGoing.create({ userId, eventId }, { transaction });
+    } catch (error) {
+      // Concurrent create hit unique (eventId, userId) — already Going.
+      if (error.name === "SequelizeUniqueConstraintError") {
+        await event.reload({ transaction });
+        return { event, isGoingByMe: true };
+      }
+      throw error;
+    }
+
+    await db.Event.update(
+      {
+        interestedCount: db.sequelize.literal('"interestedCount" + 1'),
+      },
+      { where: { id: event.id }, transaction },
+    );
+    await event.reload({ transaction });
+    return { event, isGoingByMe: true };
   });
-
-  if (existing) {
-    await existing.destroy();
-    const nextCount = Math.max(0, event.interestedCount - 1);
-    await event.update({ interestedCount: nextCount });
-    await event.reload();
-    return { event, isGoingByMe: false };
-  }
-
-  await db.EventGoing.create({ userId, eventId });
-  await event.update({ interestedCount: event.interestedCount + 1 });
-  await event.reload();
-  return { event, isGoingByMe: true };
 }
 
 /**
