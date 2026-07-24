@@ -10,3 +10,7 @@ node_modules/
 data/*.sqlite
 data/*.sqlite-journal
 
+# Local agent / product docs (keep on disk; do not commit)
+AGENTS.md
+doc/
+

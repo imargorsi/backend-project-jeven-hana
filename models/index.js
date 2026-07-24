@@ -1,4 +1,3 @@
-// Neon Postgres via ../bin/dbConnection — see readme.md.
 const sequelize = require("../bin/dbConnection");
 const { DataTypes } = require("sequelize");
 
@@ -6,11 +5,15 @@ const defineDemoItem = require("./definitions/demoItem");
 const defineUser = require("./definitions/user");
 const defineEvent = require("./definitions/event");
 const defineEventGoing = require("./definitions/eventGoing");
+const defineCommunityPost = require("./definitions/communityPost");
+const defineCommunityPostLike = require("./definitions/communityPostLike");
 
 const DemoItem = defineDemoItem(sequelize, DataTypes);
 const User = defineUser(sequelize, DataTypes);
 const Event = defineEvent(sequelize, DataTypes);
 const EventGoing = defineEventGoing(sequelize, DataTypes);
+const CommunityPost = defineCommunityPost(sequelize, DataTypes);
+const CommunityPostLike = defineCommunityPostLike(sequelize, DataTypes);
 
 User.hasMany(Event, {
   foreignKey: "createdByUserId",
@@ -37,6 +40,42 @@ Event.belongsToMany(User, {
 EventGoing.belongsTo(Event, { foreignKey: "eventId", as: "event" });
 EventGoing.belongsTo(User, { foreignKey: "userId", as: "user" });
 
-const db = { sequelize, DemoItem, User, Event, EventGoing };
+User.hasMany(CommunityPost, {
+  foreignKey: "createdByUserId",
+  as: "communityPosts",
+});
+CommunityPost.belongsTo(User, {
+  foreignKey: "createdByUserId",
+  as: "author",
+});
+
+User.belongsToMany(CommunityPost, {
+  through: CommunityPostLike,
+  foreignKey: "userId",
+  otherKey: "postId",
+  as: "likedPosts",
+});
+CommunityPost.belongsToMany(User, {
+  through: CommunityPostLike,
+  foreignKey: "postId",
+  otherKey: "userId",
+  as: "likedByUsers",
+});
+
+CommunityPostLike.belongsTo(CommunityPost, {
+  foreignKey: "postId",
+  as: "post",
+});
+CommunityPostLike.belongsTo(User, { foreignKey: "userId", as: "user" });
+
+const db = {
+  sequelize,
+  DemoItem,
+  User,
+  Event,
+  EventGoing,
+  CommunityPost,
+  CommunityPostLike,
+};
 
 module.exports = { db };
