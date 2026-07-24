@@ -1,7 +1,12 @@
 # Node.js
 node_modules/
 
-# Local SQLite database (created on first run)
+# Env / secrets
+.env
+.env.local
+.env.*.local
+
+# Local SQLite (legacy; app uses Neon Postgres)
 data/*.sqlite
 data/*.sqlite-journal
 

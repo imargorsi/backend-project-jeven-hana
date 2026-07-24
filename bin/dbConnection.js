@@ -1,29 +1,33 @@
-// SQLite only — Sequelize + sqlite3. Models are registered in models/index.js.
-const fs = require("fs");
-const path = require("path");
-const config = require("../config/config.json");
+// Neon Postgres via Sequelize + pg. Models are registered in models/index.js.
+require("dotenv").config();
+
 const { Sequelize } = require("sequelize");
 
-const env = config.development;
-const rel = env.storage || "data/database.sqlite";
-const storagePath = path.isAbsolute(rel)
-  ? rel
-  : path.join(__dirname, "..", rel);
+const databaseUrl = process.env.DATABASE_URL;
 
-fs.mkdirSync(path.dirname(storagePath), { recursive: true });
+if (!databaseUrl) {
+  throw new Error(
+    "Missing DATABASE_URL. Copy .env.example to .env and paste your Neon connection string."
+  );
+}
 
-const logging = env.logging === true ? console.log : false;
+const logging = process.env.DB_LOGGING === "true" ? console.log : false;
 
-const database = new Sequelize({
-  dialect: "sqlite",
-  storage: storagePath,
+const database = new Sequelize(databaseUrl, {
+  dialect: "postgres",
   logging,
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
 });
 
 database
   .authenticate()
   .then(() => {
-    console.log("SQLite connected:", storagePath);
+    console.log("Postgres connected (Neon)");
   })
   .catch((error) => {
     console.log("Database connection error:", error.message);

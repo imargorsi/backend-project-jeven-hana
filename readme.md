@@ -1,18 +1,20 @@
 # Backend starter kit (AR GORSI)
 
-Small **Express** API with **Sequelize** and **SQLite**, aimed at getting productive quickly if you usually work on the frontend.
+Small **Express** API with **Sequelize** and **Neon Postgres**, aimed at getting productive quickly if you usually work on the frontend.
 
 ## Quick start
 
 ```bash
 npm install
+cp .env.example .env
+# Paste your Neon connection string into DATABASE_URL in .env
 npm start
 ```
 
 - Default URL: `http://localhost:3000` (override with env var `PORT`).
 - Sanity checks: `GET /` and `GET /api/health` return JSON.
 
-The server only starts listening **after** the database connects and Sequelize runs `sync({ alter: true })` (see `bin/www`). That keeps your SQLite schema roughly in line with your models in development.
+The server only starts listening **after** the database connects and Sequelize runs `sync({ alter: true })` (see `bin/www`). That keeps your schema roughly in line with your models in development. Prefer migrations before production.
 
 ## Where things live
 
@@ -20,16 +22,17 @@ The server only starts listening **after** the database connects and Sequelize r
 |------|--------|
 | Express app (middleware, route mounting) | `app.js` |
 | HTTP server + DB sync + port | `bin/www` |
-| DB connection (SQLite file path, Sequelize instance) | `bin/dbConnection.js` |
-| Sequelize config (storage path, logging) | `config/config.json` |
+| DB connection (Neon / `DATABASE_URL`) | `bin/dbConnection.js` |
+| Sequelize config notes | `config/config.json` |
 | Models registry (export `db` for routes) | `models/index.js` |
 | HTTP routes | `routes/` (e.g. `routes/index.js`) |
-| SQLite database file | `data/database.sqlite` (created on first run) |
+| Env secrets | `.env` (gitignored) — see `.env.example` |
 
 ## Connect / change the database
 
-- Connection is built in `bin/dbConnection.js` using `config/config.json` → `development.storage` (default: `data/database.sqlite`).
-- To use another file, change `storage` to a relative path from the project root or an absolute path.
+- Uses **Neon Postgres** via `DATABASE_URL` in `.env` (loaded by `dotenv`).
+- Connection is built in `bin/dbConnection.js` with SSL required for Neon.
+- Get a connection string from the [Neon Console](https://console.neon.tech) → your project → Connection details.
 
 ## Add a new route
 
@@ -85,4 +88,4 @@ npm run dev
 
 ---
 
-Think of the flow as: **`bin/www`** starts the process → **`bin/dbConnection.js`** connects SQLite → **`models/index.js`** ties models to that connection → **`app.js`** wires Express and **`routes/`** handles HTTP.
+Think of the flow as: **`bin/www`** starts the process → **`bin/dbConnection.js`** connects Neon Postgres → **`models/index.js`** ties models to that connection → **`app.js`** wires Express and **`routes/`** handles HTTP.
