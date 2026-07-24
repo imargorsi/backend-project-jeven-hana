@@ -1,6 +1,9 @@
-# Backend starter kit (AR GORSI)
+# Backend — Jevan Hana API
 
-Small **Express** API with **Sequelize** and **Neon Postgres**, aimed at getting productive quickly if you usually work on the frontend.
+Express + Sequelize + **Neon Postgres** + **Clerk** for the Jevan Hana community app.
+
+**Product scope:** `../AGENTS.md` + `../doc/modules/`  
+**Stack rules for agents:** `AGENTS.md` (this folder)
 
 ## Quick start
 
@@ -53,7 +56,8 @@ CLERK_SECRET_KEY=sk_test_...
 | Method | Path | Access |
 | ------ | ---- | ------ |
 | POST | `/api/v1/auth/sync` | Signed-in — upsert local `Users` row from Clerk |
-| GET | `/api/v1/auth/me` | Signed-in — local profile + role |
+| GET | `/api/v1/auth/me` | Signed-in — local profile + role (also syncs) |
+| GET | `/api/v1/users/me` | Signed-in — same as `/auth/me` (user resource) |
 | GET | `/api/v1/auth/ping` | Signed-in — token check |
 | GET | `/api/v1/auth/admin-ping` | Admin only |
 

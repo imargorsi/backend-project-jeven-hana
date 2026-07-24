@@ -11,6 +11,7 @@ var { clerkMiddleware } = require("@clerk/express");
 var indexRouter = require("./routes/index");
 var demoRouter = require("./routes/demo");
 var authRouter = require("./routes/auth");
+var usersRouter = require("./routes/users");
 
 var app = express();
 
@@ -25,6 +26,7 @@ app.use(clerkMiddleware());
 
 app.use("/", indexRouter);
 app.use("/", authRouter);
+app.use("/", usersRouter);
 app.use("/", demoRouter);
 
 // catch 404 and forward to error handler
