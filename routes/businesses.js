@@ -174,17 +174,17 @@ router.delete(
 );
 
 /**
- * POST /api/v1/businesses/:id/ka-best
- * Admin toggle Ka Best badge.
+ * POST /api/v1/businesses/:id/featured
+ * Admin toggle Featured (verified icon on listings).
  */
 router.post(
-  "/api/v1/businesses/:id/ka-best",
+  "/api/v1/businesses/:id/featured",
   requireAuth,
   attachLocalUser,
   requireAdmin,
   async function (req, res, next) {
     try {
-      const result = await businessService.toggleKaBest(req.params.id);
+      const result = await businessService.toggleFeatured(req.params.id);
       if (result.error) {
         return respondServiceError(res, result.error);
       }
@@ -192,7 +192,7 @@ router.post(
       return success(
         res,
         { business: businessService.toPublicBusiness(result.business) },
-        result.business.isKaBest ? "Marked Ka Best" : "Removed Ka Best",
+        result.business.isFeatured ? "Marked Featured" : "Removed Featured",
       );
     } catch (error) {
       return next(error);

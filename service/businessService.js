@@ -101,7 +101,7 @@ function toPublicBusiness(business) {
     phone: business.phone,
     whatsapp: business.whatsapp,
     coverImageUrl: business.coverImageUrl,
-    isKaBest: Boolean(business.isKaBest),
+    isFeatured: Boolean(business.isFeatured),
     ratingAvg: Number(business.ratingAvg) || 0,
     reviewCount: business.reviewCount || 0,
     createdByUserId: business.createdByUserId,
@@ -324,7 +324,7 @@ async function listBusinesses({ category } = {}) {
   const businesses = await db.Business.findAll({
     where,
     order: [
-      ["isKaBest", "DESC"],
+      ["isFeatured", "DESC"],
       ["name", "ASC"],
     ],
   });
@@ -350,7 +350,7 @@ async function createBusiness(userId, body) {
   const business = await db.Business.create({
     ...parsed.data,
     createdByUserId: userId,
-    isKaBest: false,
+    isFeatured: false,
     ratingAvg: 0,
     reviewCount: 0,
   });
@@ -415,7 +415,7 @@ async function deleteBusiness(actor, businessId) {
   return { business: snapshot };
 }
 
-async function toggleKaBest(businessId) {
+async function toggleFeatured(businessId) {
   const business = await getBusinessById(businessId);
   if (!business) {
     return {
@@ -427,7 +427,7 @@ async function toggleKaBest(businessId) {
     };
   }
 
-  await business.update({ isKaBest: !business.isKaBest });
+  await business.update({ isFeatured: !business.isFeatured });
   await business.reload();
   return { business };
 }
@@ -445,7 +445,7 @@ async function searchBusinessesByQuery(query) {
       ],
     },
     order: [
-      ["isKaBest", "DESC"],
+      ["isFeatured", "DESC"],
       ["name", "ASC"],
     ],
     limit: 40,
@@ -462,6 +462,6 @@ module.exports = {
   createBusiness,
   updateBusiness,
   deleteBusiness,
-  toggleKaBest,
+  toggleFeatured,
   searchBusinessesByQuery,
 };

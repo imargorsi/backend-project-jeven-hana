@@ -39,7 +39,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.TEXT,
         allowNull: true,
       },
-      isKaBest: {
+      isFeatured: {
         type: DataTypes.BOOLEAN,
         allowNull: false,
         defaultValue: false,
@@ -66,7 +66,7 @@ module.exports = (sequelize, DataTypes) => {
       indexes: [
         { fields: ["category"] },
         { fields: ["createdByUserId"] },
-        { fields: ["isKaBest"] },
+        { fields: ["isFeatured"] },
       ],
     },
   );
