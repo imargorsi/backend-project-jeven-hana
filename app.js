@@ -14,6 +14,8 @@ var authRouter = require("./routes/auth");
 var usersRouter = require("./routes/users");
 var eventsRouter = require("./routes/events");
 var communityRouter = require("./routes/community");
+var businessesRouter = require("./routes/businesses");
+var uploadsRouter = require("./routes/uploads");
 
 var app = express();
 
@@ -31,6 +33,8 @@ app.use("/", authRouter);
 app.use("/", usersRouter);
 app.use("/", eventsRouter);
 app.use("/", communityRouter);
+app.use("/", businessesRouter);
+app.use("/", uploadsRouter);
 app.use("/", demoRouter);
 
 // catch 404 and forward to error handler
