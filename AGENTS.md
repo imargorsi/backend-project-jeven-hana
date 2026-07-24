@@ -67,6 +67,13 @@ utils/apiResponse.js   # success / fail envelope
 | GET | `/api/v1/users/me` | Signed-in (same user resource) |
 | GET | `/api/v1/auth/ping` | Signed-in |
 | GET | `/api/v1/auth/admin-ping` | Admin |
+| GET | `/api/v1/events` | Public upcoming list (slim v1 shape) |
+| POST | `/api/v1/events` | Signed-in create (no approval) |
+| GET | `/api/v1/events/going/me` | Signed-in Going list |
+| GET | `/api/v1/events/:id` | Public |
+| PATCH | `/api/v1/events/:id` | Owner or admin edit |
+| DELETE | `/api/v1/events/:id` | Owner or admin delete |
+| POST | `/api/v1/events/:id/going` | Signed-in toggle Going |
 
 ### Making an admin
 
@@ -106,7 +113,7 @@ Public browse vs signed-in vs admin: match `../doc/modules/scope.md`.
 4. Mount in `app.js`
 5. Document endpoints in `../doc/modules/{feature}.md` when behavior is set
 
-Keep route handlers thin. Ownership: users mutate **own** rows; admin can delete any.
+Keep route handlers thin. Ownership: users mutate **own** rows; admin can edit/delete any (events) / delete any (other content per `scope.md`).
 
 Ka Best = `isKaBest` boolean on business/place — admin toggle only.
 
@@ -116,7 +123,7 @@ Ka Best = `isKaBest` boolean on business/place — admin toggle only.
 
 ```env
 DATABASE_URL=postgresql://…?sslmode=require&uselibpqcompat=true
-PORT=3000
+PORT=3001
 CLERK_PUBLISHABLE_KEY=pk_…
 CLERK_SECRET_KEY=sk_…
 ```

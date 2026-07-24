@@ -14,7 +14,7 @@ cp .env.example .env
 npm start
 ```
 
-- Default URL: `http://localhost:3000` (override with env var `PORT`).
+- Default URL: `http://localhost:3001` (override with env var `PORT`).
 - Sanity checks: `GET /` and `GET /api/health` return JSON.
 
 The server only starts listening **after** the database connects and Sequelize runs `sync({ alter: true })` (see `bin/www`). That keeps your schema roughly in line with your models in development. Prefer migrations before production.
