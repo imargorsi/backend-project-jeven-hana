@@ -1,12 +1,16 @@
 var express = require("express");
 var router = express.Router();
 const demoService = require("../service/demoService");
+const { requireAuth } = require("../middleware/requireAuth");
+const { success, fail } = require("../utils/apiResponse");
+
+// Public reads — guests can browse (matches mobile product).
 
 // GET /api/demo
 router.get("/api/demo", async function (req, res, next) {
   try {
     const items = await demoService.getAllItems();
-    res.json({ ok: true, items });
+    return success(res, { items }, "OK");
   } catch (error) {
     next(error);
   }
@@ -16,20 +20,22 @@ router.get("/api/demo", async function (req, res, next) {
 router.get("/api/demo/:id", async function (req, res, next) {
   try {
     const item = await demoService.getItemById(req.params.id);
-    if (!item) return res.status(404).json({ ok: false, message: "Demo item not found" });
-    res.json({ ok: true, item });
+    if (!item) return fail(res, "Demo item not found", 404);
+    return success(res, { item }, "OK");
   } catch (error) {
     next(error);
   }
 });
 
+// Mutations require Clerk sign-in (same gating idea as mobile account actions).
+
 // POST /api/demo
-router.post("/api/demo", async function (req, res, next) {
+router.post("/api/demo", requireAuth, async function (req, res, next) {
   try {
     const body = req.body;
 
     if (!body || !body.name) {
-      return res.status(400).json({ ok: false, message: "`name` is required" });
+      return fail(res, "`name` is required", 400, [{ field: "name" }]);
     }
 
     const item = await demoService.createItem({
@@ -37,14 +43,14 @@ router.post("/api/demo", async function (req, res, next) {
       description: body.description || null,
       isActive: body.isActive !== undefined ? body.isActive : true,
     });
-    res.status(201).json({ ok: true, item });
+    return success(res, { item }, "Created", 201);
   } catch (error) {
     next(error);
   }
 });
 
 // PUT /api/demo/:id
-router.put("/api/demo/:id", async function (req, res, next) {
+router.put("/api/demo/:id", requireAuth, async function (req, res, next) {
   try {
     const item = await demoService.updateItem(req.params.id, {
       name: req.body.name,
@@ -53,24 +59,24 @@ router.put("/api/demo/:id", async function (req, res, next) {
     });
 
     if (!item) {
-      return res.status(404).json({ ok: false, message: "Demo item not found" });
+      return fail(res, "Demo item not found", 404);
     }
 
-    res.json({ ok: true, item });
+    return success(res, { item }, "Updated");
   } catch (error) {
     next(error);
   }
 });
 
 // DELETE /api/demo/:id
-router.delete("/api/demo/:id", async function (req, res, next) {
+router.delete("/api/demo/:id", requireAuth, async function (req, res, next) {
   try {
     const item = await demoService.deleteItem(req.params.id);
     if (!item) {
-      return res.status(404).json({ ok: false, message: "Demo item not found" });
+      return fail(res, "Demo item not found", 404);
     }
 
-    res.json({ ok: true, message: "Deleted", item });
+    return success(res, { item }, "Deleted");
   } catch (error) {
     next(error);
   }

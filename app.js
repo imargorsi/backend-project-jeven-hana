@@ -1,13 +1,16 @@
+require("dotenv").config();
+
 var createError = require("http-errors");
 var express = require("express");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 var cors = require("cors");
+var { clerkMiddleware } = require("@clerk/express");
 
 // Routes: add a file under routes/, require it here, then app.use("/", thatRouter).
-// See readme.md — "Add a new route".
 var indexRouter = require("./routes/index");
 var demoRouter = require("./routes/demo");
+var authRouter = require("./routes/auth");
 
 var app = express();
 
@@ -17,7 +20,11 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(cors());
 
-app.use("/", indexRouter); // more routers: app.use("/", otherRouter);
+// Attach Clerk auth state from Bearer token / session cookie (does not block guests).
+app.use(clerkMiddleware());
+
+app.use("/", indexRouter);
+app.use("/", authRouter);
 app.use("/", demoRouter);
 
 // catch 404 and forward to error handler
@@ -27,16 +34,12 @@ app.use(function (req, res, next) {
 
 // error handler
 app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get("env") === "development" ? err : {};
-
-  // send JSON error response
-  res.status(err.status || 500).json({
-    error: {
-      message: err.message,
-      status: err.status || 500,
-    },
+  const status = err.status || 500;
+  res.status(status).json({
+    success: false,
+    message: err.message || "Internal server error",
+    data: null,
+    errors: [{ code: status === 404 ? "not_found" : "server_error" }],
   });
 });
 

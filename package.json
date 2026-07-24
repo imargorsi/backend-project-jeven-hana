@@ -7,11 +7,12 @@
     "dev": "nodemon ./bin/www"
   },
   "dependencies": {
+    "@clerk/express": "^2.1.45",
     "cookie-parser": "~1.4.4",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
     "dotenv": "^17.4.2",
-    "express": "~4.16.1",
+    "express": "^4.22.2",
     "http-errors": "~1.6.3",
     "morgan": "~1.9.1",
     "pg": "^8.22.0",

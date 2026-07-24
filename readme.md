@@ -25,7 +25,9 @@ The server only starts listening **after** the database connects and Sequelize r
 | DB connection (Neon / `DATABASE_URL`) | `bin/dbConnection.js` |
 | Sequelize config notes | `config/config.json` |
 | Models registry (export `db` for routes) | `models/index.js` |
-| HTTP routes | `routes/` (e.g. `routes/index.js`) |
+| Auth middleware | `middleware/requireAuth.js`, `requireAdmin.js`, `attachLocalUser.js` |
+| User sync service | `service/userService.js` |
+| HTTP routes | `routes/` (e.g. `routes/auth.js`, `routes/demo.js`) |
 | Env secrets | `.env` (gitignored) — see `.env.example` |
 
 ## Connect / change the database
@@ -33,6 +35,37 @@ The server only starts listening **after** the database connects and Sequelize r
 - Uses **Neon Postgres** via `DATABASE_URL` in `.env` (loaded by `dotenv`).
 - Connection is built in `bin/dbConnection.js` with SSL required for Neon.
 - Get a connection string from the [Neon Console](https://console.neon.tech) → your project → Connection details.
+
+## Clerk auth (same app as mobile)
+
+Auth is **Clerk only** — same Clerk application as `project-jeven-hana`.
+
+1. Put keys in `.env` (from Clerk Dashboard → API Keys):
+
+```env
+CLERK_PUBLISHABLE_KEY=pk_test_...
+CLERK_SECRET_KEY=sk_test_...
+```
+
+2. Mobile sends `Authorization: Bearer <session_token>` (see `lib/api.client.ts`).
+3. API verifies with `@clerk/express` (`clerkMiddleware` + `requireAuth`).
+
+| Method | Path | Access |
+| ------ | ---- | ------ |
+| POST | `/api/v1/auth/sync` | Signed-in — upsert local `Users` row from Clerk |
+| GET | `/api/v1/auth/me` | Signed-in — local profile + role |
+| GET | `/api/v1/auth/ping` | Signed-in — token check |
+| GET | `/api/v1/auth/admin-ping` | Admin only |
+
+**Admin role:** in Clerk Dashboard → Users → user → Public metadata:
+
+```json
+{ "role": "admin" }
+```
+
+Then call `POST /api/v1/auth/sync` (or `/me`) so the local `Users.role` updates.
+
+**Do not** put `CLERK_SECRET_KEY` in the Expo app — server only.
 
 ## Add a new route
 
@@ -52,25 +85,15 @@ The app already uses `express.json()` and `cors()`, so your frontend can send `C
 
 After a restart, `sync({ alter: true })` in `bin/www` will try to align tables with your models (fine for local dev; for production, teams often use **migrations** instead of `alter: true`).
 
-## When you add auth or stricter validation
-
-The minimal kit does not ship **bcrypt**, **joi**, or **jsonwebtoken** — nothing in the repo imports them yet. When you build login/sign-up or need request validation, add what you need, for example:
-
-```bash
-npm install bcrypt joi jsonwebtoken
-```
-
-Use a strong JWT secret (environment variable in production, not committed).
-
 ## Demo API
 
 A full working demo route is available at `/api/demo`.
 
-- `GET /api/demo` list items
-- `GET /api/demo/:id` get single item
-- `POST /api/demo` create item (JSON: `name`, `description`, `isActive`)
-- `PUT /api/demo/:id` update item
-- `DELETE /api/demo/:id` remove item
+- `GET /api/demo` list items — **public**
+- `GET /api/demo/:id` get single item — **public**
+- `POST /api/demo` create item — **signed-in**
+- `PUT /api/demo/:id` update item — **signed-in**
+- `DELETE /api/demo/:id` remove item — **signed-in**
 
 Example payload for POST/PUT:
 
