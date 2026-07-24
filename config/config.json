@@ -1,0 +1,6 @@
+{
+  "development": {
+    "storage": "data/database.sqlite",
+    "logging": false
+  }
+}

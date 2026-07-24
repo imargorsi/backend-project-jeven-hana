@@ -1,0 +1,7 @@
+# Node.js
+node_modules/
+
+# Local SQLite database (created on first run)
+data/*.sqlite
+data/*.sqlite-journal
+
