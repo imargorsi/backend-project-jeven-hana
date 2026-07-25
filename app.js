@@ -29,7 +29,13 @@ app.use(cookieParser());
 app.use(cors());
 
 // Attach Clerk auth state from Bearer token / session cookie (does not block guests).
-app.use(clerkMiddleware());
+if (process.env.CLERK_SECRET_KEY) {
+  app.use(clerkMiddleware());
+} else {
+  console.warn(
+    "[auth] CLERK_SECRET_KEY is missing — protected routes will return 401 until it is set on Vercel.",
+  );
+}
 
 app.use("/", indexRouter);
 app.use("/", authRouter);

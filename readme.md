@@ -129,7 +129,9 @@ Vercel detects Express from `app.js` (`module.exports = app`). Local `npm start`
 
 ### 2. Environment variables (Project → Settings → Environment Variables)
 
-Copy from `.env.example` into **Production** (and Preview if you want):
+**Required** — without these the function used to crash on cold start:
+
+Copy from `.env.example` into **Production** (and Preview if you want), then **Redeploy**:
 
 | Variable | Notes |
 |----------|--------|
@@ -143,6 +145,8 @@ Copy from `.env.example` into **Production** (and Preview if you want):
 | `R2_PUBLIC_BASE_URL` | e.g. `https://pub-….r2.dev` (no trailing slash) |
 
 `PORT` is optional on Vercel (platform sets it).
+
+After deploy, open `/api/health` — it returns booleans for which env vars are present (no secrets).
 
 ### 3. After deploy
 
