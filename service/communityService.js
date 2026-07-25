@@ -392,6 +392,29 @@ async function toggleLike(userId, postId) {
           { where: { id: post.id }, transaction },
         );
         isLikedByMe = true;
+
+        // Notify post author (skip self). Outside hot path failures are ignored.
+        try {
+          const notificationService = require("./notificationService");
+          const actor = await db.User.findByPk(userId, {
+            attributes: ["id", "firstName", "lastName", "imageUrl"],
+            transaction,
+          });
+          await notificationService.notifyUser({
+            userId: post.createdByUserId,
+            type: "like",
+            title: `${notificationService.displayName(actor)} liked your post`,
+            body: "Your neighbourhood post got a like.",
+            actorUserId: userId,
+            actorName: notificationService.displayName(actor),
+            actorAvatarUrl: actor?.imageUrl || null,
+            targetType: "post",
+            targetId: post.id,
+            transaction,
+          });
+        } catch (_) {
+          // Inbox is best-effort — never fail the like toggle.
+        }
       }
     }
 

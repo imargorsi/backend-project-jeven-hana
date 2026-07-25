@@ -179,7 +179,9 @@ async function createReview(actor, businessId, body) {
     };
   }
 
-  const business = await db.Business.findByPk(id, { attributes: ["id"] });
+  const business = await db.Business.findByPk(id, {
+    attributes: ["id", "name", "createdByUserId"],
+  });
   if (!business) {
     return {
       error: {
@@ -235,6 +237,24 @@ async function createReview(actor, businessId, body) {
     const withAuthor = await db.BusinessReview.findByPk(review.id, {
       include: [authorInclude()],
     });
+
+    // Notify listing owner (skip self). Best-effort — never fail the review.
+    try {
+      const notificationService = require("./notificationService");
+      await notificationService.notifyUser({
+        userId: business.createdByUserId,
+        type: "business_update",
+        title: `${authorDisplayName(actor)} reviewed your listing`,
+        body: `New ${ratingParsed.value}-star review on “${business.name}”.`,
+        actorUserId: actor.id,
+        actorName: authorDisplayName(actor),
+        actorAvatarUrl: actor.imageUrl || null,
+        targetType: "business",
+        targetId: business.id,
+      });
+    } catch (_) {
+      // Inbox is best-effort.
+    }
 
     return { review: withAuthor, aggregates };
   } catch (error) {

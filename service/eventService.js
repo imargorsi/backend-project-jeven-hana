@@ -323,6 +323,29 @@ async function toggleGoing(userId, eventId) {
       { where: { id: event.id }, transaction },
     );
     await event.reload({ transaction });
+
+    try {
+      const notificationService = require("./notificationService");
+      const actor = await db.User.findByPk(userId, {
+        attributes: ["id", "firstName", "lastName", "imageUrl"],
+        transaction,
+      });
+      await notificationService.notifyUser({
+        userId: event.createdByUserId,
+        type: "event_reminder",
+        title: `${notificationService.displayName(actor)} is going`,
+        body: `Someone marked Going on “${event.title}”.`,
+        actorUserId: userId,
+        actorName: notificationService.displayName(actor),
+        actorAvatarUrl: actor?.imageUrl || null,
+        targetType: "event",
+        targetId: event.id,
+        transaction,
+      });
+    } catch (_) {
+      // Inbox is best-effort — never fail the Going toggle.
+    }
+
     return { event, isGoingByMe: true };
   });
 }
