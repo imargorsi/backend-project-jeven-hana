@@ -22,6 +22,7 @@ router.get("/api/v1/uploads/status", function (req, res) {
  * POST /api/v1/uploads/presign
  * Signed-in — returns a short-lived PUT URL for R2.
  * Until R2_* env keys are set, responds 503 (app keeps logo fallback).
+ * When configured: returns a short-lived PUT URL for R2 cover uploads.
  */
 router.post(
   "/api/v1/uploads/presign",

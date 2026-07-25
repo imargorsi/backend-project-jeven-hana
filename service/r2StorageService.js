@@ -88,7 +88,7 @@ function getStorageStatus() {
 }
 
 /**
- * Presigned PUT so the mobile client can upload directly to R2 later.
+ * Presigned PUT so the mobile client can upload directly to R2.
  * Returns error until R2_* env vars are filled.
  */
 async function createPresignedUpload({

@@ -1,4 +1,5 @@
 const { Op } = require("sequelize");
+const { getR2Config } = require("../config/r2");
 const { db } = require("../models");
 const {
   BUSINESS_CATEGORIES,
@@ -26,6 +27,10 @@ function parseOptionalPhone(value, field) {
   return { value: phone };
 }
 
+/**
+ * Cover URLs must be https and under R2_PUBLIC_BASE_URL (no arbitrary hotlinks).
+ * `null` / empty clears the cover.
+ */
 function parseOptionalCoverUrl(value) {
   if (value === null) return { value: null };
   const url = trimOrNull(String(value));
@@ -48,6 +53,31 @@ function parseOptionalCoverUrl(value) {
       },
     };
   }
+
+  const { isConfigured, publicBaseUrl } = getR2Config();
+  if (!isConfigured || !publicBaseUrl) {
+    return {
+      error: {
+        status: 503,
+        message:
+          "Image storage is not configured. Set R2_* keys before saving a cover.",
+        errors: [{ field: "coverImageUrl", code: "r2_not_configured" }],
+      },
+    };
+  }
+
+  const allowedPrefix = `${publicBaseUrl}/`;
+  if (!url.startsWith(allowedPrefix)) {
+    return {
+      error: {
+        status: 400,
+        message:
+          "`coverImageUrl` must be an object URL under R2_PUBLIC_BASE_URL",
+        errors: [{ field: "coverImageUrl", code: "invalid_host" }],
+      },
+    };
+  }
+
   return { value: url };
 }
 
