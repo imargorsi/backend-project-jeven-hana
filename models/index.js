@@ -8,6 +8,7 @@ const defineEventGoing = require("./definitions/eventGoing");
 const defineCommunityPost = require("./definitions/communityPost");
 const defineCommunityPostLike = require("./definitions/communityPostLike");
 const defineBusiness = require("./definitions/business");
+const defineBusinessReview = require("./definitions/businessReview");
 
 const DemoItem = defineDemoItem(sequelize, DataTypes);
 const User = defineUser(sequelize, DataTypes);
@@ -16,6 +17,7 @@ const EventGoing = defineEventGoing(sequelize, DataTypes);
 const CommunityPost = defineCommunityPost(sequelize, DataTypes);
 const CommunityPostLike = defineCommunityPostLike(sequelize, DataTypes);
 const Business = defineBusiness(sequelize, DataTypes);
+const BusinessReview = defineBusinessReview(sequelize, DataTypes);
 
 User.hasMany(Event, {
   foreignKey: "createdByUserId",
@@ -79,6 +81,25 @@ Business.belongsTo(User, {
   as: "owner",
 });
 
+User.hasMany(BusinessReview, {
+  foreignKey: "createdByUserId",
+  as: "businessReviews",
+});
+BusinessReview.belongsTo(User, {
+  foreignKey: "createdByUserId",
+  as: "author",
+});
+
+Business.hasMany(BusinessReview, {
+  foreignKey: "businessId",
+  as: "reviews",
+  onDelete: "CASCADE",
+});
+BusinessReview.belongsTo(Business, {
+  foreignKey: "businessId",
+  as: "business",
+});
+
 const db = {
   sequelize,
   DemoItem,
@@ -88,6 +109,7 @@ const db = {
   CommunityPost,
   CommunityPostLike,
   Business,
+  BusinessReview,
 };
 
 module.exports = { db };

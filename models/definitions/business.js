@@ -44,7 +44,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: false,
       },
-      /** Part 2 reviews foundation — write API later. */
+      /** Aggregated from BusinessReviews — refreshed on review write. */
       ratingAvg: {
         type: DataTypes.FLOAT,
         allowNull: false,
