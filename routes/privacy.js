@@ -4,6 +4,8 @@ var express = require("express");
 var router = express.Router();
 
 var LAST_UPDATED = "July 20, 2026";
+var CONTACT_EMAIL = "hey@argorsi.com";
+var CONTACT_WHATSAPP = "+923094713379";
 
 var SECTIONS = [
   {
@@ -24,11 +26,21 @@ var SECTIONS = [
   },
   {
     heading: "Data retention and deletion",
-    body: "We keep account and content data while your account is active and as needed to operate the service. You can edit or remove much of your content in the app. To request account deletion or help with data removal, contact us using the details on the About screen inside the Jevan Hana app.",
+    body:
+      "We keep account and content data while your account is active and as needed to operate the service. You can edit or remove much of your content in the app. To request account deletion or help with data removal, email " +
+      CONTACT_EMAIL +
+      " or WhatsApp " +
+      CONTACT_WHATSAPP +
+      ".",
   },
   {
     heading: "Children",
-    body: "Jevan Hana is intended for general community use. If you believe a child has provided personal information inappropriately, contact us and we will take reasonable steps to address it.",
+    body:
+      "Jevan Hana is intended for general community use. If you believe a child has provided personal information inappropriately, contact us at " +
+      CONTACT_EMAIL +
+      " or WhatsApp " +
+      CONTACT_WHATSAPP +
+      " and we will take reasonable steps to address it.",
   },
   {
     heading: "Changes",
@@ -36,7 +48,12 @@ var SECTIONS = [
   },
   {
     heading: "Contact",
-    body: "Questions about privacy: use WhatsApp or the contact options on the About screen inside the Jevan Hana app.",
+    body:
+      "Questions about privacy: email " +
+      CONTACT_EMAIL +
+      " or WhatsApp " +
+      CONTACT_WHATSAPP +
+      ". You can also use the contact options on the About screen inside the Jevan Hana app.",
   },
 ];
 
