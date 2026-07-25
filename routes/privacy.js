@@ -4,7 +4,7 @@ var express = require("express");
 var router = express.Router();
 
 var LAST_UPDATED = "July 20, 2026";
-var CONTACT_EMAIL = "hey@argorsi.com";
+var CONTACT_EMAIL = "jevenhanalahore@gmail.com";
 var CONTACT_WHATSAPP = "+923094713379";
 
 var SECTIONS = [
