@@ -9,6 +9,7 @@ var { clerkMiddleware } = require("@clerk/express");
 
 // Routes: add a file under routes/, require it here, then app.use("/", thatRouter).
 var indexRouter = require("./routes/index");
+var privacyRouter = require("./routes/privacy");
 var demoRouter = require("./routes/demo");
 var authRouter = require("./routes/auth");
 var usersRouter = require("./routes/users");
@@ -38,6 +39,7 @@ if (process.env.CLERK_SECRET_KEY) {
 }
 
 app.use("/", indexRouter);
+app.use("/", privacyRouter);
 app.use("/", authRouter);
 app.use("/", usersRouter);
 app.use("/", eventsRouter);
