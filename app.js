@@ -7,6 +7,11 @@ var logger = require("morgan");
 var cors = require("cors");
 var { clerkMiddleware } = require("@clerk/express");
 
+var {
+  applySecurity,
+  createCorsOptions,
+} = require("./middleware/security");
+
 // Routes: add a file under routes/, require it here, then app.use("/", thatRouter).
 var indexRouter = require("./routes/index");
 var privacyRouter = require("./routes/privacy");
@@ -23,11 +28,13 @@ var searchRouter = require("./routes/search");
 
 var app = express();
 
-app.use(logger("dev"));
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+applySecurity(app);
+
+app.use(logger(process.env.NODE_ENV === "production" ? "combined" : "dev"));
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: false, limit: "1mb" }));
 app.use(cookieParser());
-app.use(cors());
+app.use(cors(createCorsOptions()));
 
 // Attach Clerk auth state from Bearer token / session cookie (does not block guests).
 if (process.env.CLERK_SECRET_KEY) {
@@ -49,19 +56,34 @@ app.use("/", uploadsRouter);
 app.use("/", reviewsRouter);
 app.use("/", notificationsRouter);
 app.use("/", searchRouter);
-app.use("/", demoRouter);
+
+// Demo CRUD is for local/dev kits — keep it off production by default.
+var enableDemo =
+  process.env.ENABLE_DEMO_ROUTES === "true" ||
+  process.env.NODE_ENV !== "production";
+if (enableDemo) {
+  app.use("/", demoRouter);
+}
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
   next(createError(404));
 });
 
-// error handler
+// error handler — never leak stacks to clients
 app.use(function (err, req, res, next) {
   const status = err.status || 500;
+  if (status >= 500) {
+    console.error("[api]", err);
+  }
+  const clientMessage =
+    status >= 500 && process.env.NODE_ENV === "production"
+      ? "Internal server error"
+      : err.message || "Internal server error";
+
   res.status(status).json({
     success: false,
-    message: err.message || "Internal server error",
+    message: clientMessage,
     data: null,
     errors: [{ code: status === 404 ? "not_found" : "server_error" }],
   });

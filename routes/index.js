@@ -8,10 +8,18 @@ router.get("/", function (req, res) {
 });
 
 router.get("/api/health", function (req, res) {
-  res.json({
+  var payload = {
     ok: true,
     status: "healthy",
-    env: {
+  };
+
+  // Config flags only when explicitly enabled (ops) or outside production.
+  var showEnv =
+    process.env.HEALTH_DETAIL === "true" ||
+    process.env.NODE_ENV !== "production";
+
+  if (showEnv) {
+    payload.env = {
       hasDatabaseUrl: Boolean(process.env.DATABASE_URL),
       hasClerkSecret: Boolean(process.env.CLERK_SECRET_KEY),
       hasClerkPublishable: Boolean(process.env.CLERK_PUBLISHABLE_KEY),
@@ -22,8 +30,10 @@ router.get("/api/health", function (req, res) {
           process.env.R2_BUCKET_NAME,
       ),
       vercel: Boolean(process.env.VERCEL),
-    },
-  });
+    };
+  }
+
+  res.json(payload);
 });
 
 module.exports = router;

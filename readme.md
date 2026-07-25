@@ -148,13 +148,15 @@ Copy from `.env.example` into **Production** (and Preview if you want), then **R
 
 `PORT` is optional on Vercel (platform sets it).
 
-After deploy, open `/api/health` — it returns booleans for which env vars are present (no secrets).
+After deploy, open `/api/health`. In production it returns `{ ok, status }` only. Set `HEALTH_DETAIL=true` on Vercel if you need env presence flags.
 
 ### 3. After deploy
 
-1. Open `https://YOUR_PROJECT.vercel.app/` or `/api/health`.
+1. Preferred public origin: `https://api.jevanhana.argorsi.com` (HTTPS; HTTP redirects).
 2. Point the Expo app `EXPO_PUBLIC_API_URL` at that origin (no trailing slash).
-3. In Clerk Dashboard, allow your Vercel domain if you use any Clerk redirect / authorized origins for this API.
+3. Privacy page: `https://api.jevanhana.argorsi.com/privacy`.
+4. In Clerk Dashboard, allow this API domain on any authorized / redirect origins if you use them.
+5. Optional hardening envs: `CORS_ORIGINS`, leave demo off in production (`ENABLE_DEMO_ROUTES` unset).
 
 ### Schema note
 
