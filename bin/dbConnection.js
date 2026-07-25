@@ -1,6 +1,8 @@
 // Neon Postgres via Sequelize + pg. Models are registered in models/index.js.
 require("dotenv").config();
 
+// Explicit require so Vercel’s bundler includes `pg` (Sequelize loads it dynamically).
+const pg = require("pg");
 const { Sequelize } = require("sequelize");
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -19,6 +21,9 @@ const database = new Sequelize(
     "postgres://vercel:missing@127.0.0.1:5432/missing_database_url",
   {
     dialect: "postgres",
+    // Critical for Vercel/serverless: pass the driver so Sequelize does not
+    // try to resolve `pg` via a dynamic require that NFT can miss.
+    dialectModule: pg,
     logging,
     dialectOptions: databaseUrl
       ? {

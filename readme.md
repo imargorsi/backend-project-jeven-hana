@@ -125,7 +125,9 @@ Vercel detects Express from `app.js` (`module.exports = app`). Local `npm start`
 4. Leave Build / Output empty — Express needs no build step.
 5. Deploy.
 
-`vercel.json` sets a 30s function limit for slower Neon queries.
+`vercel.json` routes all traffic to `api/index.js` (Express app export).
+
+**Important:** Adding or editing Environment Variables does **not** update an existing deployment. After setting env vars, use **Deployments → … → Redeploy** (or push a new commit).
 
 ### 2. Environment variables (Project → Settings → Environment Variables)
 

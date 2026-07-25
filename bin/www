@@ -26,20 +26,26 @@ var server = http.createServer(app);
 
 /**
  * Listen on provided port, on all network interfaces.
+ *
+ * On Vercel the platform invokes `api/index.js` (exported Express app).
+ * Never run listen / sync inside the serverless runtime.
  */
-
-// After DB connects, align database tables with your Sequelize models (dev-friendly).
-// See readme.md. For production, teams often use migrations instead of alter: true.
-db.sequelize
-  .sync({ alter: true })
-  .then(() => {
-    server.listen(port);
-    server.on("error", onError);
-    server.on("listening", onListening);
-  })
-  .catch((error) => {
-    console.log("www error ", error);
-  });
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  // After DB connects, align database tables with your Sequelize models (dev-friendly).
+  // See readme.md. For production, teams often use migrations instead of alter: true.
+  db.sequelize
+    .sync({ alter: true })
+    .then(() => {
+      server.listen(port);
+      server.on("error", onError);
+      server.on("listening", onListening);
+    })
+    .catch((error) => {
+      console.log("www error ", error);
+    });
+}
 
 /**
  * Normalize a port into a number, string, or false.
