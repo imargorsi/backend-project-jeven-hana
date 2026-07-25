@@ -10,6 +10,7 @@ const defineCommunityPostLike = require("./definitions/communityPostLike");
 const defineBusiness = require("./definitions/business");
 const defineBusinessReview = require("./definitions/businessReview");
 const defineNotification = require("./definitions/notification");
+const defineReport = require("./definitions/report");
 
 const DemoItem = defineDemoItem(sequelize, DataTypes);
 const User = defineUser(sequelize, DataTypes);
@@ -20,6 +21,7 @@ const CommunityPostLike = defineCommunityPostLike(sequelize, DataTypes);
 const Business = defineBusiness(sequelize, DataTypes);
 const BusinessReview = defineBusinessReview(sequelize, DataTypes);
 const Notification = defineNotification(sequelize, DataTypes);
+const Report = defineReport(sequelize, DataTypes);
 
 User.hasMany(Event, {
   foreignKey: "createdByUserId",
@@ -116,6 +118,15 @@ Notification.belongsTo(User, {
   as: "actor",
 });
 
+User.hasMany(Report, {
+  foreignKey: "reporterUserId",
+  as: "reports",
+});
+Report.belongsTo(User, {
+  foreignKey: "reporterUserId",
+  as: "reporter",
+});
+
 const db = {
   sequelize,
   DemoItem,
@@ -127,6 +138,7 @@ const db = {
   Business,
   BusinessReview,
   Notification,
+  Report,
 };
 
 module.exports = { db };
