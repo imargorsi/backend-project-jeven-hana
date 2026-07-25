@@ -6,6 +6,9 @@ node_modules/
 .env.local
 .env.*.local
 
+# Vercel
+.vercel
+
 # Local SQLite (legacy; app uses Neon Postgres)
 data/*.sqlite
 data/*.sqlite-journal

@@ -12,6 +12,7 @@ if (!databaseUrl) {
 }
 
 const logging = process.env.DB_LOGGING === "true" ? console.log : false;
+const isServerless = Boolean(process.env.VERCEL);
 
 const database = new Sequelize(databaseUrl, {
   dialect: "postgres",
@@ -22,6 +23,15 @@ const database = new Sequelize(databaseUrl, {
       rejectUnauthorized: false,
     },
   },
+  // Smaller pool on Vercel (Fluid / serverless) — prefer Neon's pooled connection string.
+  pool: isServerless
+    ? {
+        max: 5,
+        min: 0,
+        idle: 10_000,
+        acquire: 20_000,
+      }
+    : undefined,
 });
 
 database

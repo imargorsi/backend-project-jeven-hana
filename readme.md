@@ -113,6 +113,47 @@ Auto-restart on file changes (requires `devDependencies` installed via `npm inst
 npm run dev
 ```
 
+## Deploy to Vercel
+
+Vercel detects Express from `app.js` (`module.exports = app`). Local `npm start` still uses `bin/www` (listen + `sync({ alter: true })`). On Vercel, **`bin/www` is not used** — schema sync does not run on deploy.
+
+### 1. Push `main` and import the repo
+
+1. Push this backend repo to GitHub (or GitLab / Bitbucket).
+2. [vercel.com/new](https://vercel.com/new) → import the backend repo.
+3. Root directory = repo root (where `app.js` and `package.json` live).
+4. Leave Build / Output empty — Express needs no build step.
+5. Deploy.
+
+`vercel.json` sets a 30s function limit for slower Neon queries.
+
+### 2. Environment variables (Project → Settings → Environment Variables)
+
+Copy from `.env.example` into **Production** (and Preview if you want):
+
+| Variable | Notes |
+|----------|--------|
+| `DATABASE_URL` | Prefer Neon **pooled** connection string for serverless |
+| `CLERK_PUBLISHABLE_KEY` | Same Clerk app as mobile |
+| `CLERK_SECRET_KEY` | Server only |
+| `R2_ACCOUNT_ID` | Cloudflare R2 |
+| `R2_ACCESS_KEY_ID` | |
+| `R2_SECRET_ACCESS_KEY` | |
+| `R2_BUCKET_NAME` | |
+| `R2_PUBLIC_BASE_URL` | e.g. `https://pub-….r2.dev` (no trailing slash) |
+
+`PORT` is optional on Vercel (platform sets it).
+
+### 3. After deploy
+
+1. Open `https://YOUR_PROJECT.vercel.app/` or `/api/health`.
+2. Point the Expo app `EXPO_PUBLIC_API_URL` at that origin (no trailing slash).
+3. In Clerk Dashboard, allow your Vercel domain if you use any Clerk redirect / authorized origins for this API.
+
+### Schema note
+
+Run schema updates locally (`npm start` → `sync({ alter: true })`) or use migrations **before** relying on new columns in production. Do not depend on Vercel cold starts to alter tables.
+
 ---
 
 Think of the flow as: **`bin/www`** starts the process → **`bin/dbConnection.js`** connects Neon Postgres → **`models/index.js`** ties models to that connection → **`app.js`** wires Express and **`routes/`** handles HTTP.
