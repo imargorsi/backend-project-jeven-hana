@@ -11,7 +11,10 @@ const { success, fail } = require("../utils/apiResponse");
 async function goingSetForClerkUser(clerkUserId, eventIds) {
   if (!clerkUserId || !eventIds.length) return new Set();
 
-  const user = await db.User.findOne({ where: { clerkId: clerkUserId } });
+  const user = await db.User.findOne({
+    where: { clerkId: clerkUserId },
+    attributes: ["id"],
+  });
   if (!user) return new Set();
 
   const rows = await db.EventGoing.findAll({

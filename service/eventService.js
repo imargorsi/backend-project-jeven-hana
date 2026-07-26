@@ -236,15 +236,29 @@ function assertEndsAfterStarts(startsAt, endsAt) {
   return null;
 }
 
-async function listUpcomingEvents() {
+async function listUpcomingEvents({ limit = 50 } = {}) {
   const now = new Date();
+  const safeLimit = Math.min(Math.max(Math.trunc(Number(limit) || 50), 1), 100);
   return db.Event.findAll({
     where: {
       startsAt: {
         [Op.gte]: now,
       },
     },
+    attributes: [
+      "id",
+      "title",
+      "description",
+      "startsAt",
+      "endsAt",
+      "location",
+      "interestedCount",
+      "createdByUserId",
+      "createdAt",
+      "updatedAt",
+    ],
     order: [["startsAt", "ASC"]],
+    limit: safeLimit,
   });
 }
 

@@ -9,6 +9,48 @@ const SEARCH_TYPES = ["all", "businesses", "community", "events"];
 const PER_TYPE_LIMIT = 20;
 const TRENDING_LIMIT = 5;
 
+const BUSINESS_LIST_ATTRIBUTES = [
+  "id",
+  "name",
+  "category",
+  "description",
+  "address",
+  "phone",
+  "whatsapp",
+  "coverImageUrl",
+  "isFeatured",
+  "ratingAvg",
+  "reviewCount",
+  "createdByUserId",
+  "createdAt",
+  "updatedAt",
+];
+
+const POST_LIST_ATTRIBUTES = [
+  "id",
+  "content",
+  "contentIsUrdu",
+  "category",
+  "isPinned",
+  "likeCount",
+  "createdByUserId",
+  "createdAt",
+  "updatedAt",
+];
+
+const EVENT_LIST_ATTRIBUTES = [
+  "id",
+  "title",
+  "description",
+  "startsAt",
+  "endsAt",
+  "location",
+  "interestedCount",
+  "createdByUserId",
+  "createdAt",
+  "updatedAt",
+];
+
 function normalizeType(raw) {
   const type = typeof raw === "string" ? raw.trim().toLowerCase() : "all";
   if (!SEARCH_TYPES.includes(type)) {
@@ -40,6 +82,7 @@ async function searchBusinesses(q) {
         { address: { [Op.iLike]: `%${q}%` } },
       ],
     },
+    attributes: BUSINESS_LIST_ATTRIBUTES,
     order: [
       ["isFeatured", "DESC"],
       ["ratingAvg", "DESC"],
@@ -54,6 +97,7 @@ async function searchPosts(q) {
     where: {
       content: { [Op.iLike]: `%${q}%` },
     },
+    attributes: POST_LIST_ATTRIBUTES,
     include: [authorInclude()],
     order: [
       ["isPinned", "DESC"],
@@ -72,6 +116,7 @@ async function searchEvents(q) {
         { location: { [Op.iLike]: `%${q}%` } },
       ],
     },
+    attributes: EVENT_LIST_ATTRIBUTES,
     order: [["startsAt", "DESC"]],
     limit: PER_TYPE_LIMIT,
   });
@@ -128,21 +173,23 @@ async function search({ q, type: typeRaw, clerkUserId = null }) {
   const wantCommunity = type === "all" || type === "community";
   const wantEvents = type === "all" || type === "events";
 
-  const [businesses, posts, events] = await Promise.all([
+  const [businesses, posts, events, localUserId] = await Promise.all([
     wantBusinesses ? searchBusinesses(query) : Promise.resolve([]),
     wantCommunity ? searchPosts(query) : Promise.resolve([]),
     wantEvents ? searchEvents(query) : Promise.resolve([]),
+    resolveLocalUserId(clerkUserId),
   ]);
 
-  const localUserId = await resolveLocalUserId(clerkUserId);
-  const liked = await likedPostIdSet(
-    localUserId,
-    posts.map((post) => post.id),
-  );
-  const going = await goingEventIdSet(
-    localUserId,
-    events.map((event) => event.id),
-  );
+  const [liked, going] = await Promise.all([
+    likedPostIdSet(
+      localUserId,
+      posts.map((post) => post.id),
+    ),
+    goingEventIdSet(
+      localUserId,
+      events.map((event) => event.id),
+    ),
+  ]);
 
   return {
     query,
@@ -168,6 +215,7 @@ async function search({ q, type: typeRaw, clerkUserId = null }) {
 async function listTrendingFeatured() {
   const businesses = await db.Business.findAll({
     where: { isFeatured: true },
+    attributes: BUSINESS_LIST_ATTRIBUTES,
     order: [
       ["ratingAvg", "DESC"],
       ["name", "ASC"],

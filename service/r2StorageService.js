@@ -14,6 +14,8 @@ const ALLOWED_CONTENT_TYPES = new Set([
   "image/png",
   "image/webp",
 ]);
+/** Hard cap for business cover uploads (bytes). */
+const MAX_COVER_BYTES = 5 * 1024 * 1024;
 
 let cachedClient = null;
 let cachedKey = "";
@@ -84,23 +86,64 @@ function getStorageStatus() {
     bucket: config.isConfigured ? config.bucketName : null,
     publicBaseUrl: config.isConfigured ? config.publicBaseUrl : null,
     provider: "cloudflare-r2",
+    maxBytes: MAX_COVER_BYTES,
   };
+}
+
+function parseByteSize(value) {
+  if (value === undefined || value === null || value === "") {
+    return { value: null };
+  }
+  const n = Number(value);
+  if (!Number.isFinite(n) || n <= 0) {
+    return {
+      error: {
+        status: 400,
+        message: "`byteSize` must be a positive number",
+        errors: [{ field: "byteSize", code: "invalid" }],
+      },
+    };
+  }
+  return { value: Math.trunc(n) };
 }
 
 /**
  * Presigned PUT so the mobile client can upload directly to R2.
  * Returns error until R2_* env vars are filled.
+ * Requires `byteSize` ≤ 5 MB so oversized covers never hit R2.
  */
 async function createPresignedUpload({
   userId,
   folder = "businesses/covers",
   contentType = "image/jpeg",
   filename = "cover.jpg",
+  byteSize,
   expiresInSeconds = 300,
 }) {
   const config = getR2Config();
   if (!config.isConfigured) {
     return { error: notConfiguredError() };
+  }
+
+  const sizeParsed = parseByteSize(byteSize);
+  if (sizeParsed.error) return { error: sizeParsed.error };
+  if (sizeParsed.value == null) {
+    return {
+      error: {
+        status: 400,
+        message: "`byteSize` is required (file size in bytes)",
+        errors: [{ field: "byteSize", code: "required" }],
+      },
+    };
+  }
+  if (sizeParsed.value > MAX_COVER_BYTES) {
+    return {
+      error: {
+        status: 400,
+        message: "Cover photo must be 5 MB or smaller",
+        errors: [{ field: "byteSize", code: "too_large", maxBytes: MAX_COVER_BYTES }],
+      },
+    };
   }
 
   const normalizedType = String(contentType || "").toLowerCase().trim();
@@ -130,6 +173,7 @@ async function createPresignedUpload({
     Bucket: config.bucketName,
     Key: keyResult.objectKey,
     ContentType: normalizedType,
+    ContentLength: sizeParsed.value,
   });
 
   const uploadUrl = await getSignedUrl(client, command, {
@@ -143,6 +187,8 @@ async function createPresignedUpload({
       publicUrl: publicUrlForKey(keyResult.objectKey),
       expiresInSeconds,
       contentType: normalizedType,
+      maxBytes: MAX_COVER_BYTES,
+      byteSize: sizeParsed.value,
     },
   };
 }
@@ -167,6 +213,16 @@ async function uploadBuffer({
         status: 400,
         message: "Image buffer is required",
         errors: [{ code: "invalid_body" }],
+      },
+    };
+  }
+
+  if (buffer.length > MAX_COVER_BYTES) {
+    return {
+      error: {
+        status: 400,
+        message: "Cover photo must be 5 MB or smaller",
+        errors: [{ code: "too_large", maxBytes: MAX_COVER_BYTES }],
       },
     };
   }
@@ -239,6 +295,7 @@ async function deleteObject(objectKey) {
 }
 
 module.exports = {
+  MAX_COVER_BYTES,
   getStorageStatus,
   createPresignedUpload,
   uploadBuffer,

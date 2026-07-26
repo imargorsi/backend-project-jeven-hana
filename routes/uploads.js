@@ -36,6 +36,7 @@ router.post(
         folder: body.folder || "businesses/covers",
         contentType: body.contentType || "image/jpeg",
         filename: body.filename || "cover.jpg",
+        byteSize: body.byteSize,
       });
 
       if (result.error) {
