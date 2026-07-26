@@ -33,6 +33,7 @@ const POST_LIST_ATTRIBUTES = [
   "category",
   "isPinned",
   "likeCount",
+  "imageUrl",
   "createdByUserId",
   "createdAt",
   "updatedAt",

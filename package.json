@@ -10,6 +10,7 @@
     "start": "node ./bin/www",
     "dev": "nodemon ./bin/www",
     "db:ensure-list-indexes": "node ./scripts/ensureListIndexes.js",
+    "db:ensure-community-image": "node ./scripts/ensureCommunityPostImageUrl.js",
     "announce:about-contact": "node ./scripts/announceAboutContact.js"
   },
   "dependencies": {

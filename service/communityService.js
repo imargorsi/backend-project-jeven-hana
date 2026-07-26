@@ -9,6 +9,7 @@ const {
   parseLimitOffset,
   trimPage,
 } = require("../utils/pagination");
+const { parseOptionalR2ImageUrl } = require("../utils/r2ImageUrl.utils");
 
 const MAX_CONTENT_LENGTH = 2000;
 
@@ -19,6 +20,7 @@ const LIST_ATTRIBUTES = [
   "category",
   "isPinned",
   "likeCount",
+  "imageUrl",
   "createdByUserId",
   "createdAt",
   "updatedAt",
@@ -80,6 +82,7 @@ function toPublicPost(post, { isLikedByMe = false } = {}) {
     category: post.category,
     isPinned: Boolean(post.isPinned),
     likeCount: post.likeCount,
+    imageUrl: post.imageUrl || null,
     isLikedByMe: Boolean(isLikedByMe),
     createdByUserId: post.createdByUserId,
     author: toPublicAuthor(author),
@@ -144,12 +147,20 @@ function parseCreateInput(body, actor) {
     isPinned = Boolean(body.isPinned);
   }
 
+  let imageUrl = null;
+  if (body.imageUrl !== undefined && body.imageUrl !== null) {
+    const imageParsed = parseOptionalR2ImageUrl(body.imageUrl, "imageUrl");
+    if (imageParsed.error) return imageParsed;
+    imageUrl = imageParsed.value;
+  }
+
   return {
     data: {
       content: contentParsed.value,
       category: body.category,
       contentIsUrdu,
       isPinned,
+      imageUrl,
     },
   };
 }
@@ -210,6 +221,12 @@ function parseUpdateInput(body, actor) {
       };
     }
     patch.isPinned = Boolean(body.isPinned);
+  }
+
+  if (Object.prototype.hasOwnProperty.call(body, "imageUrl")) {
+    const imageParsed = parseOptionalR2ImageUrl(body.imageUrl, "imageUrl");
+    if (imageParsed.error) return imageParsed;
+    patch.imageUrl = imageParsed.value;
   }
 
   if (Object.keys(patch).length === 0) {

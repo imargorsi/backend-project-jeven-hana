@@ -7,14 +7,14 @@ const {
 const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
 const { getR2Config } = require("../config/r2");
 
-const ALLOWED_FOLDERS = new Set(["businesses/covers"]);
+const ALLOWED_FOLDERS = new Set(["businesses/covers", "community/posts"]);
 const ALLOWED_CONTENT_TYPES = new Set([
   "image/jpeg",
   "image/jpg",
   "image/png",
   "image/webp",
 ]);
-/** Hard cap for business cover uploads (bytes). */
+/** Hard cap for R2 image uploads (bytes) — covers + community photos. */
 const MAX_COVER_BYTES = 5 * 1024 * 1024;
 
 let cachedClient = null;

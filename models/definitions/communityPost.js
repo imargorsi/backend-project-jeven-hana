@@ -35,6 +35,11 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         defaultValue: 0,
       },
+      /** Optional single photo — R2 public URL (max 1 image in v1). */
+      imageUrl: {
+        type: DataTypes.TEXT,
+        allowNull: true,
+      },
       createdByUserId: {
         type: DataTypes.INTEGER,
         allowNull: false,
