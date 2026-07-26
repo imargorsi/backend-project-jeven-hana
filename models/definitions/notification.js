@@ -58,7 +58,7 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
         validate: {
-          isIn: [["post", "event", "business", "place"]],
+          isIn: [["post", "event", "business", "place", "about"]],
         },
       },
       targetId: {
