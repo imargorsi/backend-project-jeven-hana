@@ -47,6 +47,11 @@ module.exports = (sequelize, DataTypes) => {
         { fields: ["category"] },
         { fields: ["createdByUserId"] },
         { fields: ["isPinned", "createdAt"] },
+        /** Filtered feed: category + pinned + newest. */
+        {
+          name: "community_posts_category_is_pinned_created_at",
+          fields: ["category", "isPinned", "createdAt"],
+        },
       ],
     },
   );

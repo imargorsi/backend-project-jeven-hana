@@ -2,8 +2,12 @@ const userService = require("../service/userService");
 const { fail } = require("../utils/apiResponse");
 
 /**
- * Sync / load local User for the authenticated Clerk user.
+ * Load local User for the authenticated Clerk user.
  * Use after requireAuth. Sets req.user.
+ *
+ * Fast path: Neon lookup by clerkId (no Clerk HTTP).
+ * Full Clerk → Neon sync only when the local row is missing
+ * (AuthSessionSync / GET /auth/me keeps profile fresh on app open).
  */
 async function attachLocalUser(req, res, next) {
   try {
@@ -12,7 +16,10 @@ async function attachLocalUser(req, res, next) {
       return fail(res, "Unauthorized", 401, [{ code: "unauthorized" }]);
     }
 
-    const user = await userService.syncUserFromClerk(clerkId);
+    let user = await userService.findByClerkId(clerkId);
+    if (!user) {
+      user = await userService.syncUserFromClerk(clerkId);
+    }
     req.user = user;
     return next();
   } catch (error) {

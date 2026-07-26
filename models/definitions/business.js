@@ -67,6 +67,12 @@ module.exports = (sequelize, DataTypes) => {
         { fields: ["category"] },
         { fields: ["createdByUserId"] },
         { fields: ["isFeatured"] },
+        /** Public list order: featured first, then name. */
+        { name: "businesses_is_featured_name", fields: ["isFeatured", "name"] },
+        {
+          name: "businesses_category_is_featured_name",
+          fields: ["category", "isFeatured", "name"],
+        },
       ],
     },
   );

@@ -5,12 +5,36 @@ const {
   BUSINESS_CATEGORIES,
   isBusinessCategory,
 } = require("../constants/businessCategories");
+const {
+  DEFAULT_ME_LIMIT,
+  MAX_ME_LIMIT,
+  parseLimitOffset,
+  trimPage,
+} = require("../utils/pagination");
 
 const MAX_NAME = 120;
 const MAX_ADDRESS = 255;
 const MAX_DESCRIPTION = 2000;
 const MAX_PHONE = 40;
 const MAX_COVER_URL = 2048;
+
+/** Columns needed for list cards + public DTO (avoids SELECT * drift). */
+const LIST_ATTRIBUTES = [
+  "id",
+  "name",
+  "category",
+  "description",
+  "address",
+  "phone",
+  "whatsapp",
+  "coverImageUrl",
+  "isFeatured",
+  "ratingAvg",
+  "reviewCount",
+  "createdByUserId",
+  "createdAt",
+  "updatedAt",
+];
 
 function parseOptionalPhone(value, field) {
   if (value === null) return { value: null };
@@ -336,7 +360,11 @@ function parseUpdateInput(body) {
   return { data: patch };
 }
 
-async function listBusinesses({ category } = {}) {
+/**
+ * Public directory — featured first, then name.
+ * Always paginated (`limit` default 20, max 50).
+ */
+async function listBusinesses({ category, limit, offset } = {}) {
   const where = {};
   if (category) {
     if (!isBusinessCategory(category)) {
@@ -351,22 +379,37 @@ async function listBusinesses({ category } = {}) {
     where.category = category;
   }
 
-  const businesses = await db.Business.findAll({
+  const page = parseLimitOffset({ limit, offset });
+  const rows = await db.Business.findAll({
     where,
+    attributes: LIST_ATTRIBUTES,
     order: [
       ["isFeatured", "DESC"],
       ["name", "ASC"],
     ],
+    limit: page.limit + 1,
+    offset: page.offset,
   });
 
-  return { businesses };
+  const { items, meta } = trimPage(rows, page);
+  return { businesses: items, meta };
 }
 
-async function listBusinessesForUser(userId) {
-  return db.Business.findAll({
+async function listBusinessesForUser(userId, { limit, offset } = {}) {
+  const page = parseLimitOffset(
+    { limit, offset },
+    { defaultLimit: DEFAULT_ME_LIMIT, maxLimit: MAX_ME_LIMIT },
+  );
+  const rows = await db.Business.findAll({
     where: { createdByUserId: userId },
+    attributes: LIST_ATTRIBUTES,
     order: [["updatedAt", "DESC"]],
+    limit: page.limit + 1,
+    offset: page.offset,
   });
+
+  const { items, meta } = trimPage(rows, page);
+  return { businesses: items, meta };
 }
 
 async function getBusinessById(id) {
@@ -474,6 +517,7 @@ async function searchBusinessesByQuery(query) {
         { address: { [Op.iLike]: `%${q}%` } },
       ],
     },
+    attributes: LIST_ATTRIBUTES,
     order: [
       ["isFeatured", "DESC"],
       ["name", "ASC"],

@@ -17,7 +17,10 @@ function respondServiceError(res, error) {
 
 async function localUserIdForClerk(clerkUserId) {
   if (!clerkUserId) return null;
-  const user = await db.User.findOne({ where: { clerkId: clerkUserId } });
+  const user = await db.User.findOne({
+    where: { clerkId: clerkUserId },
+    attributes: ["id"],
+  });
   return user ? user.id : null;
 }
 
@@ -31,19 +34,24 @@ router.get("/api/v1/community/categories", function (req, res) {
 
 /**
  * GET /api/v1/community/posts
- * Public feed. Optional ?category=. Bearer marks isLikedByMe.
+ * Public feed. Optional ?category=&limit=&offset=. Bearer marks isLikedByMe.
+ * Default limit 20, max 50.
  */
 router.get("/api/v1/community/posts", async function (req, res, next) {
   try {
-    const result = await communityService.listPosts({
-      category: req.query.category || undefined,
-    });
+    const auth = getAuth(req);
+    const [result, localUserId] = await Promise.all([
+      communityService.listPosts({
+        category: req.query.category || undefined,
+        limit: req.query.limit,
+        offset: req.query.offset,
+      }),
+      localUserIdForClerk(auth?.userId),
+    ]);
     if (result.error) {
       return respondServiceError(res, result.error);
     }
 
-    const auth = getAuth(req);
-    const localUserId = await localUserIdForClerk(auth?.userId);
     const liked = await communityService.likedPostIdSet(
       localUserId,
       result.posts.map((post) => post.id),
@@ -57,6 +65,7 @@ router.get("/api/v1/community/posts", async function (req, res, next) {
             isLikedByMe: liked.has(post.id),
           }),
         ),
+        meta: result.meta,
       },
       "OK",
     );
@@ -99,6 +108,7 @@ router.post(
 /**
  * GET /api/v1/community/posts/me
  * Signed-in user's posts. Before :id.
+ * Optional ?limit=&offset= (default 50, max 100).
  */
 router.get(
   "/api/v1/community/posts/me",
@@ -106,20 +116,24 @@ router.get(
   attachLocalUser,
   async function (req, res, next) {
     try {
-      const posts = await communityService.listPostsForUser(req.user.id);
+      const result = await communityService.listPostsForUser(req.user.id, {
+        limit: req.query.limit,
+        offset: req.query.offset,
+      });
       const liked = await communityService.likedPostIdSet(
         req.user.id,
-        posts.map((post) => post.id),
+        result.posts.map((post) => post.id),
       );
 
       return success(
         res,
         {
-          posts: posts.map((post) =>
+          posts: result.posts.map((post) =>
             communityService.toPublicPost(post, {
               isLikedByMe: liked.has(post.id),
             }),
           ),
+          meta: result.meta,
         },
         "OK",
       );

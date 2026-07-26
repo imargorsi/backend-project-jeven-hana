@@ -3,8 +3,28 @@ const {
   COMMUNITY_POST_CATEGORIES,
   isCommunityPostCategory,
 } = require("../constants/communityCategories");
+const {
+  DEFAULT_ME_LIMIT,
+  MAX_ME_LIMIT,
+  parseLimitOffset,
+  trimPage,
+} = require("../utils/pagination");
 
 const MAX_CONTENT_LENGTH = 2000;
+
+const LIST_ATTRIBUTES = [
+  "id",
+  "content",
+  "contentIsUrdu",
+  "category",
+  "isPinned",
+  "likeCount",
+  "createdByUserId",
+  "createdAt",
+  "updatedAt",
+];
+
+const AUTHOR_ATTRIBUTES = ["id", "firstName", "lastName", "imageUrl", "role"];
 
 function isAdmin(user) {
   return Boolean(user && user.role === "admin");
@@ -72,7 +92,7 @@ function authorInclude() {
   return {
     model: db.User,
     as: "author",
-    attributes: ["id", "firstName", "lastName", "imageUrl", "role"],
+    attributes: AUTHOR_ATTRIBUTES,
   };
 }
 
@@ -216,9 +236,9 @@ async function likedPostIdSet(userId, postIds) {
 
 /**
  * Public feed — pinned first, then newest.
- * Optional category filter (fixed enum).
+ * Optional category filter (fixed enum). Always paginated.
  */
-async function listPosts({ category } = {}) {
+async function listPosts({ category, limit, offset } = {}) {
   const where = {};
   if (category) {
     if (!isCommunityPostCategory(category)) {
@@ -233,28 +253,42 @@ async function listPosts({ category } = {}) {
     where.category = category;
   }
 
-  const posts = await db.CommunityPost.findAll({
+  const page = parseLimitOffset({ limit, offset });
+  const rows = await db.CommunityPost.findAll({
     where,
+    attributes: LIST_ATTRIBUTES,
     include: [authorInclude()],
     order: [
       ["isPinned", "DESC"],
       ["createdAt", "DESC"],
     ],
+    limit: page.limit + 1,
+    offset: page.offset,
   });
 
-  return { posts };
+  const { items, meta } = trimPage(rows, page);
+  return { posts: items, meta };
 }
 
-async function listPostsForUser(userId) {
-  const posts = await db.CommunityPost.findAll({
+async function listPostsForUser(userId, { limit, offset } = {}) {
+  const page = parseLimitOffset(
+    { limit, offset },
+    { defaultLimit: DEFAULT_ME_LIMIT, maxLimit: MAX_ME_LIMIT },
+  );
+  const rows = await db.CommunityPost.findAll({
     where: { createdByUserId: userId },
+    attributes: LIST_ATTRIBUTES,
     include: [authorInclude()],
     order: [
       ["isPinned", "DESC"],
       ["createdAt", "DESC"],
     ],
+    limit: page.limit + 1,
+    offset: page.offset,
   });
-  return posts;
+
+  const { items, meta } = trimPage(rows, page);
+  return { posts: items, meta };
 }
 
 async function getPostById(id) {

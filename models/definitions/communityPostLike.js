@@ -24,6 +24,11 @@ module.exports = (sequelize, DataTypes) => {
           unique: true,
           fields: ["postId", "userId"],
         },
+        /** Batch isLikedByMe: WHERE userId = ? AND postId IN (…) */
+        {
+          name: "community_post_likes_user_id_post_id",
+          fields: ["userId", "postId"],
+        },
       ],
     },
   );

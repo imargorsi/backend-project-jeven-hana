@@ -23,12 +23,15 @@ router.get("/api/v1/businesses/categories", function (req, res) {
 
 /**
  * GET /api/v1/businesses
- * Public list. Optional ?category=
+ * Public list. Optional ?category=&limit=&offset=
+ * Default limit 20, max 50.
  */
 router.get("/api/v1/businesses", async function (req, res, next) {
   try {
     const result = await businessService.listBusinesses({
       category: req.query.category || undefined,
+      limit: req.query.limit,
+      offset: req.query.offset,
     });
     if (result.error) {
       return respondServiceError(res, result.error);
@@ -38,6 +41,7 @@ router.get("/api/v1/businesses", async function (req, res, next) {
       res,
       {
         businesses: result.businesses.map(businessService.toPublicBusiness),
+        meta: result.meta,
       },
       "OK",
     );
@@ -77,6 +81,7 @@ router.post(
 
 /**
  * GET /api/v1/businesses/me
+ * Optional ?limit=&offset= (default 50, max 100).
  */
 router.get(
   "/api/v1/businesses/me",
@@ -84,13 +89,15 @@ router.get(
   attachLocalUser,
   async function (req, res, next) {
     try {
-      const businesses = await businessService.listBusinessesForUser(
-        req.user.id,
-      );
+      const result = await businessService.listBusinessesForUser(req.user.id, {
+        limit: req.query.limit,
+        offset: req.query.offset,
+      });
       return success(
         res,
         {
-          businesses: businesses.map(businessService.toPublicBusiness),
+          businesses: result.businesses.map(businessService.toPublicBusiness),
+          meta: result.meta,
         },
         "OK",
       );
