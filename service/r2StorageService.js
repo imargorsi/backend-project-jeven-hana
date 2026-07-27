@@ -43,6 +43,9 @@ function getClient() {
       accessKeyId: config.accessKeyId,
       secretAccessKey: config.secretAccessKey,
     },
+    // AWS SDK v3 defaults can sign checksum headers Expo/R2 clients do not send → 403.
+    requestChecksumCalculation: "WHEN_REQUIRED",
+    responseChecksumValidation: "WHEN_REQUIRED",
   });
   cachedKey = cacheKey;
   return cachedClient;
@@ -110,7 +113,9 @@ function parseByteSize(value) {
 /**
  * Presigned PUT so the mobile client can upload directly to R2.
  * Returns error until R2_* env vars are filled.
- * Requires `byteSize` ≤ 5 MB so oversized covers never hit R2.
+ * Requires `byteSize` ≤ 5 MB (validated here; not signed into the URL —
+ * Expo upload size can differ slightly from picker metadata and a signed
+ * ContentLength mismatch returns R2 403).
  */
 async function createPresignedUpload({
   userId,
@@ -169,11 +174,12 @@ async function createPresignedUpload({
   }
 
   const client = getClient();
+  // Only ContentType is signed — client must send the same Content-Type header.
+  // Do not sign ContentLength (breaks Expo FileSystem / edited picker assets).
   const command = new PutObjectCommand({
     Bucket: config.bucketName,
     Key: keyResult.objectKey,
     ContentType: normalizedType,
-    ContentLength: sizeParsed.value,
   });
 
   const uploadUrl = await getSignedUrl(client, command, {
