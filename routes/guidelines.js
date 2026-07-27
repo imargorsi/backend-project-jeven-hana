@@ -3,7 +3,7 @@
 var express = require("express");
 var router = express.Router();
 
-var LAST_UPDATED = "July 25, 2026";
+var LAST_UPDATED = "July 27, 2026";
 var CONTACT_EMAIL = "jevenhanalahore@gmail.com";
 var CONTACT_WHATSAPP = "+923094713379";
 
@@ -37,6 +37,21 @@ var SECTIONS = [
     body: "Use Report on posts, listings, and events if something breaks these rules. Admins may edit or remove content and take action on accounts. For urgent help, email or WhatsApp support.",
   },
   {
+    heading: "Child Safety Standards",
+    body: [
+      "Jevan Hana has zero tolerance for child sexual abuse material (CSAM) and for any content or behaviour that endangers, exploits, or sexualises minors. Content of this kind is removed as soon as we become aware of it and the account responsible is permanently banned.",
+      "Report a concern: use the Report option on any post, listing, event, or profile in the app, or contact us directly at " +
+        CONTACT_EMAIL +
+        " or WhatsApp " +
+        CONTACT_WHATSAPP +
+        ". Reports involving child safety are treated as urgent and reviewed as a priority, ahead of other reports.",
+      "We comply with applicable child safety laws and cooperate with law enforcement and relevant national and international authorities when child sexual abuse or exploitation material is identified on Jevan Hana.",
+      "Designated point of contact for child safety compliance: " +
+        CONTACT_EMAIL +
+        ".",
+    ],
+  },
+  {
     heading: "Contact",
     body:
       "Questions or appeals: email " +
@@ -57,14 +72,21 @@ function escapeHtml(text) {
 
 router.get("/guidelines", function (req, res) {
   var sectionsHtml = SECTIONS.map(function (section) {
+    var paragraphs = Array.isArray(section.body) ?
+      section.body
+    : [section.body];
+    var paragraphsHtml = paragraphs
+      .map(function (paragraph) {
+        return "<p>" + escapeHtml(paragraph) + "</p>";
+      })
+      .join("\n");
+
     return (
       "<section>" +
       "<h2>" +
       escapeHtml(section.heading) +
       "</h2>" +
-      "<p>" +
-      escapeHtml(section.body) +
-      "</p>" +
+      paragraphsHtml +
       "</section>"
     );
   }).join("\n");
